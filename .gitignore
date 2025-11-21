@@ -8,8 +8,5 @@
 # Cache
 /wereader/cache
 
-# Large media files
-*.mp4
-
 # OS-generated files
 .DS_Store
