@@ -277,7 +277,7 @@
             bottom: 0;
             left: 0;
             right: 0;
-            background: #1c1c1e; /* Dark background from screenshot */
+            background: transparent; /* 透明背景，让子元素的背景色显示 */
             z-index: 120;
         }
 
@@ -295,23 +295,42 @@
         }
 
         .player-info-bar {
+            position: relative;
             display: flex;
             align-items: center;
             padding: 10px 16px;
             gap: 12px;
+            background: transparent;
+        }
+        
+        /* 为播放器信息栏添加与卡片一致的渐变遮罩效果 */
+        .player-info-bar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.1));
+            z-index: 0;
+            pointer-events: none;
         }
 
         .dock-album-cover {
+            position: relative;
             width: 48px;
             height: 48px;
             border-radius: 6px;
             flex-shrink: 0;
+            z-index: 1;
         }
 
         .dock-album-details {
+            position: relative;
             flex: 1;
             min-width: 0;
             color: #fff;
+            z-index: 1;
         }
 
         .dock-title {
@@ -346,6 +365,7 @@
         }
 
         .dock-btn-subscribe {
+            position: relative;
             background: rgba(255,255,255,0.15);
             color: #fff;
             border: none;
@@ -354,17 +374,20 @@
             font-size: 13px;
             flex-shrink: 0;
             cursor: pointer;
+            z-index: 1;
         }
         .dock-btn-subscribe.subscribed {
              background: rgba(255,255,255,0.1);
         }
 
         .dock-btn-more {
+            position: relative;
             background: transparent;
             border: none;
             color: #8e8e93;
             font-size: 20px;
             cursor: pointer;
+            z-index: 1;
         }
 
         /* Episode List Modal */
@@ -503,6 +526,7 @@
             align-items: center;
             height: 60px;
             padding-bottom: 10px; /* Safe area */
+            background: #1c1c1e; /* 保持黑色背景，不随卡片切换 */
         }
 
         .player-main-nav .nav-item {
@@ -667,29 +691,27 @@
             background: rgba(255,255,255,0.15);
         }
 
-        /* 落地页内容样式 */
+        /* 落地页内容样式 - 堆叠卡片布局 */
         .landing-page-content {
             width: 100%;
             height: 100%;
-            overflow-y: auto;
-            overflow-x: hidden;
             position: relative;
-            padding: 0;
-            scroll-snap-type: y mandatory;
-            scroll-behavior: smooth;
+            overflow: hidden; /* 隐藏溢出，防止滚动条 */
         }
         
-        /* 每个落地页项目 */
+        /* 每个落地页项目 - 堆叠样式 */
         .landing-page-item {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
-            min-height: 100%;
-            scroll-snap-align: start;
-            scroll-snap-stop: always;
-            position: relative;
-            padding: 70px 0 150px; /* 顶部留空给tab，底部留空给播放器，减少底部距离 */
+            height: 100%;
+            padding: 120px 0 0; /* 顶部留空给tab，底部不留空，让背景色延伸到底部 */
             display: flex;
             flex-direction: column;
-            justify-content: flex-end; /* 内容靠近底部 */
+            justify-content: flex-start; /* 内容从顶部开始 */
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-origin: center center;
         }
         
         /* 氛围头图区域 - 渐变到纯色背景 */
@@ -720,7 +742,7 @@
         
         /* 推荐理由区域 */
         .recommendation-section {
-            padding: 16px 24px 12px;
+            padding: 0 24px 12px;
             text-align: left;
             position: relative;
             z-index: 1;
@@ -841,6 +863,84 @@
         
         .transcript-content.scrolling {
             transition: transform 0.05s linear;
+        }
+
+        /* 沉浸式大图布局 - 用于剧情梗概图和精彩片段图 */
+        .landing-page-item.immersive-layout {
+            padding: 0;
+        }
+
+        .landing-page-item.immersive-layout .landing-header-image {
+            filter: blur(8px) brightness(0.7);
+            opacity: 1;
+        }
+
+        .landing-page-item.immersive-layout::before {
+            background: linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.4));
+        }
+
+        .immersive-content {
+            position: relative;
+            z-index: 1;
+            padding: 60px 24px 180px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            height: 100%;
+        }
+
+        .immersive-title {
+            font-size: 20px;
+            color: rgba(255,255,255,1);
+            margin-bottom: 16px;
+            font-weight: 600;
+            line-height: 1.4;
+        }
+
+        .immersive-highlight-tag {
+            display: inline-block;
+            padding: 4px 10px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 12px;
+            font-size: 12px;
+            color: rgba(255,255,255,0.9);
+            margin-bottom: 12px;
+            backdrop-filter: blur(10px);
+            align-self: flex-start;
+        }
+
+        .immersive-text {
+            font-size: 15px;
+            color: rgba(255,255,255,0.95);
+            line-height: 1.7;
+            text-align: left;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+            max-height: 450px;
+            overflow-y: auto;
+        }
+
+        .immersive-share-button {
+            position: absolute;
+            bottom: 180px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2;
+            padding: 12px 48px;
+            background: rgba(45, 100, 210, 0.9);
+            color: #fff;
+            border: none;
+            border-radius: 24px;
+            font-size: 15px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+        }
+
+        .immersive-share-button i {
+            font-size: 16px;
         }
 
     </style>
@@ -1496,6 +1596,7 @@
      function openPlayer(book) {
          const bookIndex = books.findIndex(b => b.id === book.id);
          currentBook = book;
+         currentCardIndex = bookIndex;
          const player = document.getElementById('player');
          
          // 1. 生成所有书籍的落地页
@@ -1510,12 +1611,9 @@
          // 2. 打开播放器
          player.classList.add('active');
          
-         // 3. 滚动到当前书籍
+         // 3. 初始化卡片堆叠位置
          setTimeout(() => {
-             const targetItem = landingPageContent.children[bookIndex];
-             if (targetItem) {
-                 targetItem.scrollIntoView({ behavior: 'auto', block: 'start' });
-             }
+             updateCardsStack();
              
              // 4. 播放当前书籍的音频
              playBookAudio(book);
@@ -1524,8 +1622,108 @@
              updatePlayerDock(book);
          }, 100);
          
-         // 6. 监听滚动事件，切换书籍
-         landingPageContent.addEventListener('scroll', handleLandingPageScroll, { passive: true });
+         // 6. 添加触摸滑动事件监听
+         setupTouchEvents(landingPageContent);
+     }
+     
+     // 当前卡片索引
+     let currentCardIndex = 0;
+     
+     // 更新卡片堆叠显示
+     function updateCardsStack() {
+         const landingPageContent = document.getElementById('landing-page-content');
+         const items = Array.from(landingPageContent.children);
+         
+         items.forEach((item, index) => {
+             const offset = index - currentCardIndex;
+             
+             if (offset < 0) {
+                 // 已经划走的卡片（向上移出屏幕）
+                 item.style.transform = 'translateY(-100%) scale(0.8)';
+                 item.style.opacity = '0';
+                 item.style.zIndex = '0';
+                 item.style.pointerEvents = 'none';
+             } else if (offset === 0) {
+                 // 当前卡片
+                 item.style.transform = 'translateY(0) scale(1)';
+                 item.style.opacity = '1';
+                 item.style.zIndex = '10';
+                 item.style.pointerEvents = 'auto';
+             } else if (offset === 1) {
+                 // 下一张卡片（稍微缩小，在后面）
+                 item.style.transform = 'translateY(20px) scale(0.95)';
+                 item.style.opacity = '0.7';
+                 item.style.zIndex = '9';
+                 item.style.pointerEvents = 'none';
+             } else if (offset === 2) {
+                 // 再下一张卡片（更小，更后面）
+                 item.style.transform = 'translateY(40px) scale(0.9)';
+                 item.style.opacity = '0.4';
+                 item.style.zIndex = '8';
+                 item.style.pointerEvents = 'none';
+             } else {
+                 // 其他卡片（隐藏）
+                 item.style.transform = 'translateY(60px) scale(0.85)';
+                 item.style.opacity = '0';
+                 item.style.zIndex = '7';
+                 item.style.pointerEvents = 'none';
+             }
+         });
+     }
+     
+     // 设置触摸事件
+     function setupTouchEvents(container) {
+         let startY = 0;
+         let currentY = 0;
+         let isDragging = false;
+         
+         container.addEventListener('touchstart', (e) => {
+             startY = e.touches[0].clientY;
+             isDragging = true;
+         });
+         
+         container.addEventListener('touchmove', (e) => {
+             if (!isDragging) return;
+             currentY = e.touches[0].clientY;
+             const deltaY = currentY - startY;
+             
+             // 实时更新当前卡片位置
+             const currentItem = container.children[currentCardIndex];
+             if (currentItem && deltaY < 0) { // 只允许向上滑
+                 const progress = Math.min(Math.abs(deltaY) / 100, 1);
+                 currentItem.style.transform = `translateY(${deltaY}px) scale(${1 - progress * 0.2})`;
+                 currentItem.style.opacity = `${1 - progress * 0.5}`;
+             }
+         });
+         
+         container.addEventListener('touchend', () => {
+             if (!isDragging) return;
+             isDragging = false;
+             
+             const deltaY = currentY - startY;
+             
+             // 如果向上滑动超过100px，切换到下一张
+             if (deltaY < -100 && currentCardIndex < books.length - 1) {
+                 currentCardIndex++;
+                 currentBook = books[currentCardIndex];
+                 updateCardsStack();
+                 playBookAudio(currentBook);
+                 updatePlayerDock(currentBook);
+             } else if (deltaY > 100 && currentCardIndex > 0) {
+                 // 向下滑动，返回上一张
+                 currentCardIndex--;
+                 currentBook = books[currentCardIndex];
+                 updateCardsStack();
+                 playBookAudio(currentBook);
+                 updatePlayerDock(currentBook);
+             } else {
+                 // 没有达到阈值，恢复原位
+                 updateCardsStack();
+             }
+             
+             startY = 0;
+             currentY = 0;
+         });
      }
      
      // 将hex颜色转换为rgba格式
@@ -1540,7 +1738,6 @@
      // 创建单个落地页项目
      function createLandingPageItem(book) {
          const item = document.createElement('div');
-         item.className = 'landing-page-item';
          item.dataset.bookId = book.id;
          
          const tags = Array.isArray(book.tags) ? book.tags : [];
@@ -1549,58 +1746,82 @@
          const themeColorWithOpacity = hexToRgba(themeColor, 0.85); // 落地页背景色，85%透明度
          const sampleTranscript = book.transcript || getTranscriptForBook(book.albumTitle);
          
+         // 判断是否为剧情梗概图或精彩片段图
+         const isImmersive = book.cover.includes('剧情梗概图') || book.cover.includes('精彩片段图');
+         const isPlotSummary = book.cover.includes('剧情梗概图');
+         const isHighlight = book.cover.includes('精彩片段图');
+         
+         // 获取对应的封面图（用于沉浸式背景）
+         let coverImage = book.cover;
+         if (isImmersive) {
+             // 提取原cover路径中的人物属性信息
+             // 例如：图片/诡秘之主-男青年-精彩片段图.png -> 诡秘之主-男青年-封面图.png
+             const fileName = book.cover.split('/').pop(); // 获取文件名部分
+             const parts = fileName.replace('.png', '').split('-'); // ["诡秘之主", "男青年", "精彩片段图"]
+             
+             if (parts.length >= 3) {
+                 const bookName = parts[0]; // 诡秘之主
+                 const personaType = parts[1]; // 男青年 或 女青年 等
+                 coverImage = `图片/${bookName}-${personaType}-封面图.png`;
+             }
+             
+             console.log('沉浸式卡片 - 原图:', book.cover, '-> 封面图:', coverImage);
+         }
+         
          // 设置落地页背景色
          item.style.backgroundColor = themeColorWithOpacity;
          
-         item.innerHTML = `
-             <!-- 氛围头图 -->
-             <div class="landing-header-image" style="background-image: url('${basePath + book.cover}')"></div>
+         if (isImmersive) {
+             // 沉浸式大图布局
+             item.className = 'landing-page-item immersive-layout';
              
-             <!-- 推荐理由区域 -->
-             <div class="recommendation-section">
-                 <div class="recommendation-reason">${tagsText}</div>
-                 <div class="album-main-title">${book.albumTitle}</div>
-             </div>
+             const highlightTag = isPlotSummary ? '剧情梗概' : '精彩片段';
+             const contentText = book.synopsis || '暂无内容...';
              
-             <!-- 多模态卡片区域 - 剧情梗概卡片 -->
-             <div class="multimedia-cards">
-                 <div class="synopsis-card" style="background: ${themeColor}">
-                     ${!book.cover.includes('剧情梗概图') && !book.cover.includes('精彩片段图') ? 
-                         `<div class="synopsis-card-bg" style="background-image: url('${basePath}${book.cover}')"></div>` : 
-                         ''
-                     }
-                     <div class="synopsis-card-title">简介</div>
-                     <div class="synopsis-card-content">${book.synopsis || '暂无剧情梗概...'}</div>
+             item.innerHTML = `
+                 <!-- 沉浸式大图背景 -->
+                 <div class="landing-header-image" style="background-image: url('${basePath + coverImage}')"></div>
+                 
+                 <!-- 沉浸式内容 -->
+                 <div class="immersive-content">
+                     <div class="immersive-highlight-tag">${highlightTag}</div>
+                     <div class="immersive-title">${book.albumTitle}</div>
+                     <div class="immersive-text">${contentText}</div>
                  </div>
-             </div>
+             `;
+         } else {
+             // 原有的标准布局
+             item.className = 'landing-page-item';
              
-             <!-- 声音文稿区域 -->
-             <div class="transcript-section">
-                 <div class="transcript-container">
-                     <div class="transcript-content">${sampleTranscript}</div>
+             item.innerHTML = `
+                 <!-- 氛围头图 -->
+                 <div class="landing-header-image" style="background-image: url('${basePath + book.cover}')"></div>
+                 
+                 <!-- 推荐理由区域 -->
+                 <div class="recommendation-section">
+                     <div class="recommendation-reason">${tagsText}</div>
+                     <div class="album-main-title">${book.albumTitle}</div>
                  </div>
-             </div>
-         `;
+                 
+                 <!-- 多模态卡片区域 - 剧情梗概卡片 -->
+                 <div class="multimedia-cards">
+                     <div class="synopsis-card" style="background: ${themeColor}">
+                         <div class="synopsis-card-bg" style="background-image: url('${basePath}${book.cover}')"></div>
+                         <div class="synopsis-card-title">简介</div>
+                         <div class="synopsis-card-content">${book.synopsis || '暂无剧情梗概...'}</div>
+                     </div>
+                 </div>
+                 
+                 <!-- 声音文稿区域 -->
+                 <div class="transcript-section">
+                     <div class="transcript-container">
+                         <div class="transcript-content">${sampleTranscript}</div>
+                     </div>
+                 </div>
+             `;
+         }
          
          return item;
-     }
-     
-     // 处理落地页滚动事件
-     let scrollTimeout;
-     function handleLandingPageScroll() {
-         clearTimeout(scrollTimeout);
-         scrollTimeout = setTimeout(() => {
-             const landingPageContent = document.getElementById('landing-page-content');
-             const scrollTop = landingPageContent.scrollTop;
-             const itemHeight = landingPageContent.clientHeight;
-             const currentIndex = Math.round(scrollTop / itemHeight);
-             
-             if (books[currentIndex] && books[currentIndex].id !== currentBook.id) {
-                 currentBook = books[currentIndex];
-                 playBookAudio(currentBook);
-                 updatePlayerDock(currentBook);
-             }
-         }, 150);
      }
      
      // 播放书籍音频
@@ -1637,13 +1858,23 @@
      
      // 更新底部播放器信息
      function updatePlayerDock(book) {
-         document.getElementById('player-dock-title').innerText = book.albumTitle;
+         // 显示声音名（episodeTitle）而不是专辑名
+         const episodeTitle = book.episodeTitle || book.albumTitle;
+         document.getElementById('player-dock-title').innerText = episodeTitle;
          document.getElementById('player-dock-cover').src = basePath + book.cover;
          
          const statusText = book.isCompleted ? '已完结' : '连载中';
          const currentEp = book.currentEpisode || 1;
          const totalEp = book.episodes || 0;
          document.getElementById('player-dock-episodes').innerText = `${statusText} · ${currentEp}/${totalEp}集`;
+         
+         // 应用主题色到专辑信息栏，和卡片背景色保持一致
+         const themeColor = book.themeColor || '#1c1c1e';
+         const themeColorWithOpacity = hexToRgba(themeColor, 0.85); // 与卡片背景一致的透明度
+         const playerInfoBar = document.querySelector('.player-info-bar');
+         if (playerInfoBar) {
+             playerInfoBar.style.backgroundColor = themeColorWithOpacity;
+         }
      }
      
      // 更新文稿滚动位置
@@ -1882,6 +2113,36 @@
          } else {
             btn.classList.add('subscribed');
             btn.innerHTML = '<i class="fas fa-check"></i> 已订阅';
+         }
+     }
+     
+     // 分享内容
+     function shareContent(event) {
+         event.stopPropagation();
+         if (!currentBook) return;
+         
+         const shareText = `分享《${currentBook.albumTitle}》的精彩内容`;
+         
+         // 如果浏览器支持 Web Share API
+         if (navigator.share) {
+             navigator.share({
+                 title: currentBook.albumTitle,
+                 text: shareText,
+                 url: window.location.href
+             }).catch(err => console.log('分享取消'));
+         } else {
+             // 降级方案：复制到剪贴板
+             const textArea = document.createElement('textarea');
+             textArea.value = shareText + '\n' + window.location.href;
+             document.body.appendChild(textArea);
+             textArea.select();
+             try {
+                 document.execCommand('copy');
+                 alert('链接已复制到剪贴板');
+             } catch (err) {
+                 alert('分享失败');
+             }
+             document.body.removeChild(textArea);
          }
      }
      
