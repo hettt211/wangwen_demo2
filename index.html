@@ -714,8 +714,8 @@
             transform-origin: center center;
         }
         
-        /* 氛围头图区域 - 渐变到纯色背景 */
-        .landing-page-item::before {
+        /* 氛围头图区域 - 渐变到纯色背景（仅用于标准布局） */
+        .landing-page-item:not(.immersive-layout)::before {
             content: '';
             position: absolute;
             top: 0;
@@ -868,45 +868,51 @@
         /* 沉浸式大图布局 - 用于剧情梗概图和精彩片段图 */
         .landing-page-item.immersive-layout {
             padding: 0;
+            position: relative;
         }
 
         .landing-page-item.immersive-layout .landing-header-image {
-            filter: blur(8px) brightness(0.7);
+            filter: none; /* 不模糊，保持图片清晰 */
             opacity: 1;
+            height: 100%; /* 占满整个高度 */
+            background-position: center 50%; /* 显示图片正中部区域 */
         }
 
-        .landing-page-item.immersive-layout::before {
-            background: linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.4));
+        /* 主题色渐变遮罩层 - 在JS中动态设置 */
+        .landing-page-item.immersive-layout .immersive-gradient-mask {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 0;
+            pointer-events: none;
         }
 
         .immersive-content {
             position: relative;
             z-index: 1;
-            padding: 60px 24px 180px;
+            padding: 0;
             display: flex;
             flex-direction: column;
-            justify-content: flex-start;
+            justify-content: flex-start; /* 改为从顶部开始布局 */
             height: 100%;
+            padding-top: 50%; /* 从屏幕50%的位置开始显示内容 */
+            padding-bottom: 180px; /* 为底部播放器留空间 */
+        }
+
+        .immersive-text-container {
+            padding: 24px;
+            background: transparent;
         }
 
         .immersive-title {
-            font-size: 20px;
+            font-size: 22px;
             color: rgba(255,255,255,1);
             margin-bottom: 16px;
             font-weight: 600;
             line-height: 1.4;
-        }
-
-        .immersive-highlight-tag {
-            display: inline-block;
-            padding: 4px 10px;
-            background: rgba(255,255,255,0.2);
-            border-radius: 12px;
-            font-size: 12px;
-            color: rgba(255,255,255,0.9);
-            margin-bottom: 12px;
-            backdrop-filter: blur(10px);
-            align-self: flex-start;
         }
 
         .immersive-text {
@@ -914,8 +920,7 @@
             color: rgba(255,255,255,0.95);
             line-height: 1.7;
             text-align: left;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-            max-height: 450px;
+            max-height: 300px;
             overflow-y: auto;
         }
 
@@ -1629,47 +1634,39 @@
      // 当前卡片索引
      let currentCardIndex = 0;
      
-     // 更新卡片堆叠显示
-     function updateCardsStack() {
-         const landingPageContent = document.getElementById('landing-page-content');
-         const items = Array.from(landingPageContent.children);
-         
-         items.forEach((item, index) => {
-             const offset = index - currentCardIndex;
-             
-             if (offset < 0) {
-                 // 已经划走的卡片（向上移出屏幕）
-                 item.style.transform = 'translateY(-100%) scale(0.8)';
-                 item.style.opacity = '0';
-                 item.style.zIndex = '0';
-                 item.style.pointerEvents = 'none';
-             } else if (offset === 0) {
-                 // 当前卡片
-                 item.style.transform = 'translateY(0) scale(1)';
-                 item.style.opacity = '1';
-                 item.style.zIndex = '10';
-                 item.style.pointerEvents = 'auto';
-             } else if (offset === 1) {
-                 // 下一张卡片（稍微缩小，在后面）
-                 item.style.transform = 'translateY(20px) scale(0.95)';
-                 item.style.opacity = '0.7';
-                 item.style.zIndex = '9';
-                 item.style.pointerEvents = 'none';
-             } else if (offset === 2) {
-                 // 再下一张卡片（更小，更后面）
-                 item.style.transform = 'translateY(40px) scale(0.9)';
-                 item.style.opacity = '0.4';
-                 item.style.zIndex = '8';
-                 item.style.pointerEvents = 'none';
-             } else {
-                 // 其他卡片（隐藏）
-                 item.style.transform = 'translateY(60px) scale(0.85)';
-                 item.style.opacity = '0';
-                 item.style.zIndex = '7';
-                 item.style.pointerEvents = 'none';
-             }
-         });
-     }
+    // 更新卡片堆叠显示
+    function updateCardsStack() {
+        const landingPageContent = document.getElementById('landing-page-content');
+        const items = Array.from(landingPageContent.children);
+        
+        console.log('=== updateCardsStack 调试信息 ===');
+        console.log('当前索引 currentCardIndex:', currentCardIndex);
+        console.log('子元素总数:', items.length);
+        
+        items.forEach((item, index) => {
+            const offset = index - currentCardIndex;
+            const bookId = item.dataset.bookId;
+            
+            console.log(`卡片 ${index}: bookId=${bookId}, offset=${offset}`);
+            
+            if (offset < 0) {
+                // 已经划走的卡片（完全隐藏）
+                item.style.display = 'none';
+            } else if (offset === 0) {
+                // 当前卡片（唯一可见）
+                item.style.display = 'flex';
+                item.style.transform = 'translateY(0) scale(1)';
+                item.style.opacity = '1';
+                item.style.zIndex = '100';
+                item.style.pointerEvents = 'auto';
+                item.style.visibility = 'visible';
+                console.log(`✅ 当前显示卡片: index=${index}, bookId=${bookId}`);
+            } else {
+                // 后续卡片（完全隐藏）
+                item.style.display = 'none';
+            }
+        });
+    }
      
      // 设置触摸事件
      function setupTouchEvents(container) {
@@ -1746,54 +1743,86 @@
          const themeColorWithOpacity = hexToRgba(themeColor, 0.85); // 落地页背景色，85%透明度
          const sampleTranscript = book.transcript || getTranscriptForBook(book.albumTitle);
          
-         // 判断是否为剧情梗概图或精彩片段图
-         const isImmersive = book.cover.includes('剧情梗概图') || book.cover.includes('精彩片段图');
-         const isPlotSummary = book.cover.includes('剧情梗概图');
-         const isHighlight = book.cover.includes('精彩片段图');
+         // 根据ID判断是否使用沉浸式布局
+         // id=2、3、5、8、9、12、13 使用沉浸式大图模式
+         const immersiveIds = [2, 3, 5, 8, 9, 12, 13];
+         const isImmersive = immersiveIds.includes(book.id);
          
          // 获取对应的封面图（用于沉浸式背景）
          let coverImage = book.cover;
          if (isImmersive) {
              // 提取原cover路径中的人物属性信息
-             // 例如：图片/诡秘之主-男青年-精彩片段图.png -> 诡秘之主-男青年-封面图.png
              const fileName = book.cover.split('/').pop(); // 获取文件名部分
-             const parts = fileName.replace('.png', '').split('-'); // ["诡秘之主", "男青年", "精彩片段图"]
+             const parts = fileName.replace('.png', '').split('-'); // 拆分文件名
              
              if (parts.length >= 3) {
-                 const bookName = parts[0]; // 诡秘之主
-                 const personaType = parts[1]; // 男青年 或 女青年 等
+                 // 有人群属性：诡秘之主-男青年-精彩片段图 -> 诡秘之主-男青年-封面图
+                 const bookName = parts[0];
+                 const personaType = parts[1];
                  coverImage = `图片/${bookName}-${personaType}-封面图.png`;
+             } else if (parts.length === 2) {
+                 // 无人群属性：上门龙婿-精彩片段图 或 诡秘之主-剧情梗概图
+                 // 需要根据book.persona来构建封面图路径
+                 const bookName = parts[0];
+                 
+                 if (book.persona) {
+                     // 从persona解析人群属性：male-middle -> 男中年
+                     const [gender, ageGroup] = book.persona.split('-');
+                     const genderCN = gender === 'male' ? '男' : '女';
+                     const ageCN = ageGroup === 'youth' ? '青年' : ageGroup === 'middle' ? '中年' : '老年';
+                     coverImage = `图片/${bookName}-${genderCN}${ageCN}-封面图.png`;
+                 } else {
+                     // 如果没有persona，使用原图
+                     coverImage = book.cover;
+                 }
              }
              
-             console.log('沉浸式卡片 - 原图:', book.cover, '-> 封面图:', coverImage);
-         }
-         
-         // 设置落地页背景色
-         item.style.backgroundColor = themeColorWithOpacity;
-         
-         if (isImmersive) {
-             // 沉浸式大图布局
-             item.className = 'landing-page-item immersive-layout';
-             
-             const highlightTag = isPlotSummary ? '剧情梗概' : '精彩片段';
-             const contentText = book.synopsis || '暂无内容...';
-             
-             item.innerHTML = `
-                 <!-- 沉浸式大图背景 -->
-                 <div class="landing-header-image" style="background-image: url('${basePath + coverImage}')"></div>
-                 
-                 <!-- 沉浸式内容 -->
-                 <div class="immersive-content">
-                     <div class="immersive-highlight-tag">${highlightTag}</div>
-                     <div class="immersive-title">${book.albumTitle}</div>
-                     <div class="immersive-text">${contentText}</div>
-                 </div>
-             `;
-         } else {
-             // 原有的标准布局
-             item.className = 'landing-page-item';
-             
-             item.innerHTML = `
+            console.log('沉浸式卡片 ID:', book.id, '- 原图:', book.cover, '-> 背景图:', coverImage);
+        }
+        
+        if (isImmersive) {
+            // 沉浸式大图布局
+            item.className = 'landing-page-item immersive-layout';
+            
+            const contentText = book.synopsis || '暂无内容...';
+            
+            // 创建主题色渐变：从透明到主题色（不透明）
+            const rgbMatch = themeColorWithOpacity.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+            let gradientMask = '';
+            if (rgbMatch) {
+                const r = rgbMatch[1];
+                const g = rgbMatch[2];
+                const b = rgbMatch[3];
+                gradientMask = `linear-gradient(to bottom, 
+                    transparent 0%, 
+                    transparent 30%,
+                    rgba(${r}, ${g}, ${b}, 0.3) 40%,
+                    rgba(${r}, ${g}, ${b}, 0.7) 45%,
+                    rgba(${r}, ${g}, ${b}, 1) 50%,
+                    rgba(${r}, ${g}, ${b}, 1) 100%)`;
+            }
+            
+            item.innerHTML = `
+                <!-- 沉浸式大图背景 -->
+                <div class="landing-header-image" style="background-image: url('${basePath + coverImage}')"></div>
+                
+                <!-- 主题色渐变遮罩 -->
+                <div class="immersive-gradient-mask" style="background: ${gradientMask}"></div>
+                
+                <!-- 沉浸式内容 -->
+                <div class="immersive-content">
+                    <div class="immersive-text-container">
+                        <div class="immersive-title">${book.albumTitle}</div>
+                        <div class="immersive-text">${contentText}</div>
+                    </div>
+                </div>
+            `;
+        } else {
+            // 原有的标准布局 - 设置半透明背景色
+            item.className = 'landing-page-item';
+            item.style.backgroundColor = themeColorWithOpacity;
+            
+            item.innerHTML = `
                  <!-- 氛围头图 -->
                  <div class="landing-header-image" style="background-image: url('${basePath + book.cover}')"></div>
                  
