@@ -41,6 +41,7 @@
             flex-direction: column;
             box-shadow: 0 0 40px rgba(0,0,0,0.2);
             border-radius: 0; 
+            position: relative; /* 让子层（沉浸页/信息条）定位在手机容器内 */
         }
         
         /* 在桌面端显示圆角模拟手机 */
@@ -95,7 +96,11 @@
         #list-cards { margin-bottom: 8px; }
         
         /* 双列卡片布局 */
-        .feed-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .feed-grid { display: flex; gap: 12px; overflow-x: auto; scrollbar-width: none; padding: 0 0 8px; }
+        .feed-grid::-webkit-scrollbar { display: none; }
+        .feed-grid .grid-card { flex: 0 0 66.666%; }
+        .feed-title { font-size: 15px; font-weight: 600; color: #333; padding: 0; margin: 8px 0 4px; display: flex; justify-content: space-between; align-items: center; }
+        .feed-more { font-size: 12px; color: #999; }
         .grid-card { background: #fff; border-radius: 12px; overflow: hidden; cursor: pointer; display: flex; flex-direction: column; }
         .grid-card:active { opacity: 0.8; }
         .grid-card-cover { width: 100%; aspect-ratio: 3/4; background-size: cover; background-position: center; position: relative; background-color: #f0f0f0; }
@@ -201,7 +206,7 @@
             left: 0;
             right: 0;
             padding: 50px 16px 10px;
-            z-index: 110;
+            z-index: 300; /* 置于视频之上 */
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -448,6 +453,20 @@
             max-height: calc(70vh - 80px);
             overflow-y: auto;
         }
+
+        /* 看点大图滑画廊 Modal */
+        .info-modal { position: absolute; inset: 0; background: rgba(0,0,0,0.45); z-index: 400; display: none; align-items: center; justify-content: center; }
+        .info-modal.show { display: flex; }
+        .info-gallery-sheet { width: 92%; max-width: 380px; border-radius: 22px; background: #fff; color: #111; overflow: hidden; box-shadow: 0 12px 24px rgba(0,0,0,0.25); }
+        .gallery-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; font-weight: 600; font-size: 16px; }
+        .gallery-close { background: none; border: none; font-size: 24px; color: #999; cursor: pointer; }
+        .gallery-track { display: flex; gap: 12px; overflow-x: auto; padding: 12px 16px 20px; scrollbar-width: none; }
+        .gallery-track::-webkit-scrollbar { display: none; }
+        .gallery-card { flex: 0 0 85%; border-radius: 16px; height: 320px; background-size: cover; background-position: center; position: relative; box-shadow: 0 8px 16px rgba(0,0,0,0.2); }
+        .gallery-card::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 40%; background: linear-gradient(to top, rgba(0,0,0,0.6), rgba(0,0,0,0.2), transparent); border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; }
+        .gallery-card-footer { position: absolute; left: 12px; right: 12px; bottom: 12px; color: #fff; z-index: 1; }
+        .gallery-card-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .gallery-card-desc { font-size: 12px; opacity: 0.9; }
 
         .episode-item {
             display: flex;
@@ -870,8 +889,7 @@
 
         /* 沉浸式大图布局 - 用于剧情梗概图和精彩片段图 */
         .landing-page-item.immersive-layout {
-            padding: 120px 0 0; /* 保持顶部padding为tab栏留空间 */
-
+            padding: 0; /* 视频从页面顶部开始 */
         }
 
         .landing-page-item.immersive-layout .landing-header-image {
@@ -886,25 +904,27 @@
         .landing-page-item.immersive-layout .immersive-gradient-mask {
             content: '';
             position: absolute;
-            top: -120px; /* 向上偏移，从屏幕顶部开始 */
+            top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            height: calc(100% + 120px); /* 高度补偿padding */
+            height: 100%;
             z-index: 0;
             pointer-events: none;
         }
 
-        .immersive-content {
+        /* 顶部视频区域内的渐变遮罩修正，紧贴视频容器 */
+        .top-scene .immersive-gradient-mask { top: 0; left: 0; right: 0; bottom: 0; height: 100%; }
 
+        .immersive-content {
             z-index: 1;
             padding: 0;
             display: flex;
             flex-direction: column;
             justify-content: flex-start; /* 改为从顶部开始布局 */
             height: 100%;
-            padding-top: calc(50% - 120px); /* 从屏幕50%的位置开始显示内容，减去顶部padding */
-            padding-bottom: 180px; /* 为底部播放器留空间 */
+            padding-top: calc(26% - 120px); /* 再上移：更早进入精彩片段/时间轴区域 */
+            padding-bottom: 240px; /* 加大底部留白，保证胶囊露出 */
         }
 
         .immersive-text-container {
@@ -952,6 +972,80 @@
         .immersive-share-button i {
             font-size: 16px;
         }
+
+        /* 顶部沉浸剧情区：视频与弹幕 */
+        .top-scene { position: relative; width: 100%; height: 55%; background: #000; overflow: hidden; }
+        .scene-video { width: 100%; height: 100%; object-fit: cover; }
+        .tagline-overlay { position: absolute; bottom: 64px; left: 12px; right: 12px; color: #fff; font-size: 14px; line-height: 1.4; text-shadow: 0 2px 6px rgba(0,0,0,0.6); }
+        .overlay-book-title { font-size: 16px; font-weight: 700; line-height: 1.3; margin-bottom: 6px; color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,0.6); }
+        .overlay-episode { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+        .overlay-episode-title { font-size: 13px; font-weight: 600; color: #fff; }
+        .overlay-episodes-btn { font-size: 12px; padding: 6px 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.5); background: rgba(255,255,255,0.16); color: #fff; backdrop-filter: blur(6px); }
+        .overlay-episodes-btn::before { content: '📋'; margin-right: 6px; }
+        .overlay-tagline { font-size: 14px; }
+        .player-info-bar .dock-album-details { display: none; }
+        .album-info-bar .overlay-episode-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .album-info-row { display: flex; align-items: flex-start; gap: 10px; }
+        .album-info-meta { flex: 1; min-width: 0; }
+        .album-info-bar .overlay-episode { margin-top: 4px; margin-left: 0; width: auto; }
+        .album-info-bar .overlay-episodes-btn { font-size: 11px; padding: 4px 10px; }
+        .album-info-actions { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+        .album-action { width: 160px; }
+        .danmaku-layer { position: absolute; top: 20%; left: 0; right: 0; height: 60%; pointer-events: none; }
+        .danmaku-item { position: absolute; right: -20%; white-space: nowrap; color: #fff; font-size: 12px; padding: 2px 8px; border-radius: 12px; background: rgba(0,0,0,0.35); animation: danmaku-move 8s linear forwards; }
+        @keyframes danmaku-move { 0% { transform: translateX(0); opacity: 0.9; } 100% { transform: translateX(-120%); opacity: 0.9; } }
+
+        /* 中层：时间轴+高光片段横滑卡片 */
+        .highlights-area { padding: 12px 12px 4px; background: transparent; margin-top: -60px; }
+        .highlights-cards { display: flex; gap: 12px; overflow-x: auto; scrollbar-width: none; padding: 0 12px; scroll-snap-type: x mandatory; }
+        .highlights-cards::-webkit-scrollbar { display: none; }
+        .highlight-card { flex: 0 0 calc(66.666% - 8px); aspect-ratio: 2 / 1; border-radius: 14px; background-size: cover; background-position: center; position: relative; overflow: hidden; scroll-snap-align: start; }
+        .highlight-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.65), rgba(0,0,0,0.2), transparent); color: #fff; display: flex; flex-direction: column; justify-content: flex-end; padding: 8px; }
+        .highlight-title { font-size: 12px; font-weight: 600; line-height: 1.3; }
+        .highlight-play { margin-top: 6px; align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.75); color: #111; border: 1px solid rgba(255,255,255,0.85); padding: 6px 12px; border-radius: 999px; font-size: 12px; backdrop-filter: blur(6px); }
+        .highlight-play .play-icon { width: 0; height: 0; border-style: solid; border-width: 8px 0 8px 12px; border-color: transparent transparent transparent #111; }
+        .highlight-play .play-text { line-height: 1; }
+        .highlight-play .eq { display: none; align-items: flex-end; gap: 2px; height: 12px; }
+        .highlight-play .eq i { display: block; width: 3px; background: #fff; animation: eq 1s infinite ease-in-out; }
+        .highlight-play .eq i:nth-child(1){ height: 6px; animation-delay: 0s; }
+        .highlight-play .eq i:nth-child(2){ height: 10px; animation-delay: 0.2s; }
+        .highlight-play .eq i:nth-child(3){ height: 7px; animation-delay: 0.4s; }
+        @keyframes eq { 0%,100%{ transform: scaleY(0.6);} 50%{ transform: scaleY(1);} }
+        .highlight-play.playing { background: rgba(17,17,17,0.45); color: #fff; border-color: rgba(255,255,255,0.4); }
+        .highlight-play.playing .play-icon, .highlight-play.playing .play-text { display: none; }
+        .highlight-play.playing .eq { display: inline-flex; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255,59,48,0.5);} 70% { box-shadow: 0 0 0 10px rgba(255,59,48,0);} 100% { box-shadow: 0 0 0 0 rgba(255,59,48,0);} }
+
+        .timeline { position: relative; display: flex; gap: 16px; align-items: center; padding: 10px 8px 0; color: #fff; }
+        .timeline::before { content: ''; position: absolute; left: 8px; right: 8px; top: 14px; height: 2px; background: rgba(255,255,255,0.25); border-radius: 2px; }
+        .timeline-node { display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; }
+        .timeline-dot { width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.7); border: 2px solid rgba(255,255,255,0.9); box-sizing: border-box; }
+        .timeline-label { font-size: 11px; color: rgba(255,255,255,0.85); }
+        .timeline-node.active .timeline-dot { background: #ff3b30; border-color: #ff3b30; }
+        .timeline-node.active .timeline-label { color: #ff3b30; }
+
+        /* 底层信息区：超过 1/3 播放进度后显示 */
+        .info-tabs { margin: 6px 16px 140px; border-radius: 12px; background: rgba(0,0,0,0.35); backdrop-filter: blur(12px); color: #fff; display: block; }
+        .info-tabs.show { display: block; }
+        .info-tab-bar { display: flex; gap: 10px; padding: 10px 12px; border-bottom: none; }
+        .info-tab-btn { font-size: 12px; color: rgba(255,255,255,0.85); padding: 6px 12px; border-radius: 999px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); }
+        .info-tab-btn.active { color: #111; background: rgba(255,255,255,0.9); }
+        .info-tab-content { padding: 8px 12px 12px; }
+        .info-slider { display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; }
+        .info-slider::-webkit-scrollbar { display: none; }
+        .info-card { flex: 0 0 85%; height: 180px; border-radius: 16px; background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 12px; display: flex; flex-direction: column; justify-content: flex-end; background-size: cover; background-position: center; }
+        .info-card-title { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+        .info-card-text { font-size: 12px; line-height: 1.6; color: rgba(255,255,255,0.9); backdrop-filter: blur(4px); background: linear-gradient(to top, rgba(0,0,0,0.5), rgba(0,0,0,0.2), transparent); padding: 8px; border-radius: 12px; }
+
+        /* 专辑基础信息条 */
+        .album-info-bar { position: absolute; bottom: 60px; left: 0; right: 0; padding: 8px 12px 12px; background: rgba(26,26,26,0.9); color: #fff; border-top: 1px solid rgba(255,255,255,0.08); z-index: 100; display: none; }
+        .album-info-row { display: flex; align-items: center; gap: 12px; }
+        .album-info-cover { width: 48px; height: 48px; border-radius: 8px; object-fit: cover; }
+        .album-info-title { flex: 1; min-width: 0; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .album-info-actions { display: flex; gap: 10px; margin-top: 10px; }
+        .album-action { flex: 1; padding: 8px 12px; border-radius: 18px; border: 1px solid rgba(255,255,255,0.2); color: #fff; font-weight: 500; font-size: 12px; }
+        .album-action.primary { background: linear-gradient(90deg, rgba(255,59,48,0.8), rgba(255,149,0,0.8)); }
+        .album-action.secondary { background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.92); }
 
     </style>
 </head>
@@ -1042,7 +1136,7 @@
         <!-- 你的专属推荐 -->
         <div class="recommend-section">
             <div class="section-title">
-                你的专属推荐
+                为你推荐
                 <span class="section-more"><i class="fas fa-ellipsis-h"></i></span>
             </div>
             
@@ -1052,6 +1146,7 @@
             </div>
             
             <!-- 双列卡片区域 -->
+            <div class="feed-title" id="feed-title">畅听精彩片段 <span class="feed-more">查看更多&gt;</span></div>
             <div class="feed-grid" id="feed-grid">
                 <!-- JS生成卡片 -->
             </div>
@@ -1144,7 +1239,36 @@
                     <span>我的</span>
                 </div>
             </div>
+            <!-- 专辑基础信息条（仅沉浸页显示） -->
+            <div class="album-info-bar" id="album-info-bar">
+                <div class="album-info-row">
+                    <img id="album-info-cover" class="album-info-cover" src="">
+                    <div class="album-info-meta">
+                        <div id="album-info-title" class="album-info-title"></div>
+                        <div class="overlay-episode">
+                            <button class="overlay-episodes-btn" onclick="showEpisodeModal()">合集列表</button>
+                        </div>
+                    </div>
+                    <div class="album-info-actions">
+                        <button class="album-action primary" onclick="playFirstEpisode()">立即播放第1集</button>
+                        <button class="album-action secondary" onclick="continueFromCurrent()">从当前片段继续听</button>
+                    </div>
+                </div>
+            </div>
         </div>
+</div>
+
+<!-- 看点大图滑画廊 Modal -->
+<div class="info-modal" id="info-modal">
+    <div class="info-gallery-sheet">
+        <div class="gallery-header">
+            <div id="gallery-title">本书看点</div>
+            <button class="gallery-close" onclick="hideInfoModal()">&times;</button>
+        </div>
+        <div class="gallery-track" id="gallery-track">
+            <!-- JS填充 -->
+        </div>
+    </div>
     </div>
 
     <!-- Episode List Modal -->
@@ -1494,10 +1618,11 @@
              });
          }
  
-         const feedGrid = document.getElementById('feed-grid');
+            const feedGrid = document.getElementById('feed-grid');
+            const sectionTitleEl = document.querySelector('.recommend-section .section-title');
           
           if (feedGrid) {
-              // 清空现有grid
+             // 清空现有grid
               feedGrid.innerHTML = '';
               books.forEach((book, index) => {
                   try {
@@ -1508,6 +1633,9 @@
                       console.error('Error creating card for book:', book, error);
                   }
               });
+              if (sectionTitleEl) {
+                  sectionTitleEl.innerHTML = '为你推荐 <span class="section-more"><i class="fas fa-ellipsis-h"></i></span>';
+              }
           }
           
         // --- 播放器控制逻辑 ---
@@ -1624,15 +1752,17 @@
          player.classList.add('active');
          
          // 3. 初始化卡片堆叠位置
-         setTimeout(() => {
-             updateCardsStack();
-             
-             // 4. 播放当前书籍的音频
-             playBookAudio(book);
-             
-             // 5. 更新底部播放器信息
-             updatePlayerDock(book);
-         }, 100);
+        setTimeout(() => {
+            updateCardsStack();
+            
+            // 4. 播放当前书籍的音频
+            playBookAudio(book);
+            
+            // 5. 更新底部播放器信息
+            updatePlayerDock(book);
+            // 激活当前页面的视频播放
+            activatePageVideo(currentCardIndex);
+        }, 100);
          
          // 6. 添加触摸滑动事件监听（仅在首次或需要重新绑定时）
          if (!landingPageContent.dataset.touchEventsSetup) {
@@ -1800,25 +1930,28 @@
      }
      
      // 平滑吸附到目标卡片
-     function snapToCard(container, targetIndex) {
-         const containerHeight = container.clientHeight;
-         translateY = -targetIndex * containerHeight;
-         
-         // 添加过渡效果
-         Array.from(container.children).forEach((item, index) => {
-             const offset = translateY + index * containerHeight;
-             item.style.transition = 'transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94)'; // 类似抖音的缓动函数
-             item.style.transform = `translateY(${offset}px)`;
-             
-             // 根据距离显示/隐藏卡片以优化性能
-             const distance = Math.abs(offset);
-             if (distance > containerHeight * 2) {
-                 item.style.visibility = 'hidden';
-             } else {
-                 item.style.visibility = 'visible';
-             }
-         });
-     }
+    function snapToCard(container, targetIndex) {
+        const containerHeight = container.clientHeight;
+        translateY = -targetIndex * containerHeight;
+        
+        // 添加过渡效果
+        Array.from(container.children).forEach((item, index) => {
+            const offset = translateY + index * containerHeight;
+            item.style.transition = 'transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94)'; // 类似抖音的缓动函数
+            item.style.transform = `translateY(${offset}px)`;
+            
+            // 根据距离显示/隐藏卡片以优化性能
+            const distance = Math.abs(offset);
+            if (distance > containerHeight * 2) {
+                item.style.visibility = 'hidden';
+            } else {
+                item.style.visibility = 'visible';
+            }
+            if (index === targetIndex) {
+                activatePageVideo(index);
+            }
+        });
+    }
      
      // 将hex颜色转换为rgba格式
      function hexToRgba(hex, alpha) {
@@ -1878,58 +2011,72 @@
         }
         
         if (isImmersive) {
-            // 沉浸式大图布局
+            // 三层沉浸式布局：顶部视频+弹幕，中层高光与时间轴，底层信息区
             item.className = 'landing-page-item immersive-layout';
-            
             const contentText = book.synopsis || '暂无内容...';
-            
-            // 创建主题色渐变：从透明到主题色（不透明）
             const rgbMatch = themeColorWithOpacity.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
             let gradientMask = '';
             if (rgbMatch) {
                 const r = rgbMatch[1];
                 const g = rgbMatch[2];
                 const b = rgbMatch[3];
-                gradientMask = `linear-gradient(to bottom, 
-                    transparent 0%, 
-                    transparent 30%,
-                    rgba(${r}, ${g}, ${b}, 0.3) 40%,
-                    rgba(${r}, ${g}, ${b}, 0.7) 45%,
-                    rgba(${r}, ${g}, ${b}, 1) 50%,
-                    rgba(${r}, ${g}, ${b}, 1) 100%)`;
+                gradientMask = `linear-gradient(to bottom, transparent 0%, rgba(${r}, ${g}, ${b}, 0.0) 35%, rgba(${r}, ${g}, ${b}, 0.3) 45%, rgba(${r}, ${g}, ${b}, 0.8) 60%, rgba(${r}, ${g}, ${b}, 1) 100%)`;
             }
-            
-            const highlightsData = Array.isArray(book.highlights) && book.highlights.length > 0
-                ? book.highlights
-                : [
-                    { title: '精彩片段 · 高潮一幕', subtitle: '点击播放', cover: coverImage },
-                    { title: '名场面 · 角色高能', subtitle: '点击播放', cover: coverImage },
-                    { title: '剧情反转 · 看点', subtitle: '点击播放', cover: coverImage }
-                  ];
 
-            const highlightCards = highlightsData.map(h => `
-                <div class="h-card" style="background-image: url('${basePath + h.cover}');">
-                    <div class="h-card-overlay">
-                        <div class="h-card-title">${h.title}</div>
-                        <div class="h-card-subtitle">${h.subtitle}</div>
-                        <button class="h-card-btn">播放</button>
-                    </div>
+            const defaultHighlights = [
+                { label: '003集:爽点', time: 3, title: '爽点 · 角色反击', cover: coverImage },
+                { label: '008集:高能', time: 8, title: '高能 · 名场面', cover: coverImage },
+                { label: '017集:反转', time: 17, title: '反转 · 剧情翻盘', cover: coverImage },
+                { label: '031集:登场', time: 31, title: '登场 · 新角色出场', cover: coverImage }
+            ];
+            const highlightsData = Array.isArray(book.highlights) && book.highlights.length > 0 ? book.highlights : defaultHighlights;
+
+            const highlightsCardsHtml = highlightsData.map((h, idx) => `
+                <div class="highlight-card" data-index="${idx}" style="background-image:url('${basePath + h.cover}')">
+                  <div class="highlight-overlay">
+                    <div class="highlight-title">${h.title}</div>
+                    <button class="highlight-play" data-index="${idx}"><span class="play-icon"></span><span class="play-text">播放</span><span class="eq"><i></i><i></i><i></i></span></button>
+                  </div>
                 </div>
             `).join('');
 
+            const timelineHtml = `
+                <div class="timeline">${highlightsData.map((h, idx) => `
+                    <div class="timeline-node" data-index="${idx}">
+                       <div class="timeline-dot"></div>
+                       <div class="timeline-label">${h.label}</div>
+                    </div>
+                `).join('')}</div>
+            `;
+
+            const tagline = (book.title || contentText).slice(0, 36);
+            const videoSrc = book.videoFile ? (basePath + book.videoFile) : (basePath + (book.persona && book.persona.includes('female') ? 'video-female-youth.mp4' : 'video-male-youth.mp4'));
+
             item.innerHTML = `
-                <div class="landing-header-image" style="background-image: url('${basePath + coverImage}')"></div>
-                <div class="immersive-gradient-mask" style="background: ${gradientMask}"></div>
-                <div class="immersive-content">
-                    <div class="immersive-text-container">
-                        <div class="immersive-title">${book.albumTitle}</div>
-                        <div class="immersive-text">${contentText}</div>
-                    </div>
-                    <div class="banner-section">
-                        <div class="horizontal-cards">${highlightCards}</div>
-                    </div>
+                <div class="top-scene">
+                   <video class="scene-video" playsinline muted preload="metadata" src="${videoSrc}"></video>
+                   <div class="immersive-gradient-mask" style="background:${gradientMask}"></div>
+                   <div class="danmaku-layer"></div>
+                   <div class="title-overlay">${book.albumTitle}</div>
+                   <div class="tagline-overlay">
+                      <div class="overlay-book-title">${book.albumTitle}</div>
+                      <div class="overlay-tagline">${tagline}</div>
+                   </div>
+                </div>
+                <div class="highlights-area">
+                   <div class="highlights-cards">${highlightsCardsHtml}</div>
+                   ${timelineHtml}
+                </div>
+                <div class="info-tabs">
+                   <div class="info-tab-bar">
+                      <div class="info-tab-btn active" data-tab="synopsis">剧情梗概</div>
+                      <div class="info-tab-btn" data-tab="world">世界观</div>
+                      <div class="info-tab-btn" data-tab="roles">主要人物</div>
+                   </div>
                 </div>
             `;
+
+            setupPageInteractions(item, highlightsData, book);
         } else {
             // 原有的标准布局 - 设置半透明背景色
             item.className = 'landing-page-item';
@@ -2003,25 +2150,36 @@
      }
      
      // 更新底部播放器信息
-     function updatePlayerDock(book) {
-         // 显示声音名（episodeTitle）而不是专辑名
-         const episodeTitle = book.episodeTitle || book.albumTitle;
-         document.getElementById('player-dock-title').innerText = episodeTitle;
-         document.getElementById('player-dock-cover').src = basePath + book.cover;
+    function updatePlayerDock(book) {
+        // 显示声音名（episodeTitle）而不是专辑名
+        const episodeTitle = book.episodeTitle || book.albumTitle;
+        document.getElementById('player-dock-title').innerText = episodeTitle;
+        document.getElementById('player-dock-cover').src = basePath + book.cover;
          
          const statusText = book.isCompleted ? '已完结' : '连载中';
          const currentEp = book.currentEpisode || 1;
          const totalEp = book.episodes || 0;
-         document.getElementById('player-dock-episodes').innerText = `${statusText} · ${currentEp}/${totalEp}集`;
+        document.getElementById('player-dock-episodes').innerText = `${statusText} · ${currentEp}/${totalEp}集`;
          
          // 应用主题色到专辑信息栏，和卡片背景色保持一致
          const themeColor = book.themeColor || '#1c1c1e';
          const themeColorWithOpacity = hexToRgba(themeColor, 0.85); // 与卡片背景一致的透明度
-         const playerInfoBar = document.querySelector('.player-info-bar');
-         if (playerInfoBar) {
-             playerInfoBar.style.backgroundColor = themeColorWithOpacity;
-         }
-     }
+        const playerInfoBar = document.querySelector('.player-info-bar');
+        if (playerInfoBar) {
+            playerInfoBar.style.backgroundColor = themeColorWithOpacity;
+        }
+        // 更新专辑基础信息条
+        const bar = document.getElementById('album-info-bar');
+        const coverEl = document.getElementById('album-info-cover');
+        const titleEl = document.getElementById('album-info-title');
+        if (coverEl) coverEl.src = basePath + book.cover;
+        if (titleEl) titleEl.innerText = episodeTitle; // 使用声音标题
+        if (bar) bar.style.display = 'block';
+
+        // 更新专辑信息栏中的合集入口按钮文案
+        const episodesBtnInBar = document.querySelector('#album-info-bar .overlay-episodes-btn');
+        if (episodesBtnInBar) episodesBtnInBar.innerText = `${statusText} · ${currentEp}/${totalEp}集`;
+    }
      
      // 更新文稿滚动位置
      function updateTranscriptScroll(progressPercent) {
@@ -2128,11 +2286,20 @@
      }
 
      // 关闭播放器
-     function closePlayer() {
-         document.getElementById('player').classList.remove('active');
-         const audio = document.getElementById('immersive-audio');
-         audio.pause();
-     }
+    function closePlayer() {
+        document.getElementById('player').classList.remove('active');
+        const audio = document.getElementById('immersive-audio');
+        audio.pause();
+        const landingPageContent = document.getElementById('landing-page-content');
+        if (landingPageContent) {
+            Array.from(landingPageContent.children).forEach(it => {
+                const v = it.querySelector('.scene-video');
+                if (v) v.pause();
+            });
+        }
+        const bar = document.getElementById('album-info-bar');
+        if (bar) bar.style.display = 'none';
+    }
      
      // 切换沉浸页的Tab（简化版 - 待实现新的tab逻辑）
      function switchImmersiveTab(tabName) {
@@ -2243,10 +2410,179 @@
          // 这里可以添加实际的播放逻辑
      }
      
-     // 显示合集列表（保留旧函数以防其他地方调用）
-     function showEpisodeList() {
-         showEpisodeModal();
-     }
+    // 显示合集列表（保留旧函数以防其他地方调用）
+    function showEpisodeList() {
+        showEpisodeModal();
+    }
+
+    // 点击遮罩关闭看点画廊
+    document.getElementById('info-modal').addEventListener('click', (e) => {
+        if (e.target.id === 'info-modal') hideInfoModal();
+    });
+
+    // 页面交互：弹幕、时间轴与卡片播放
+    function setupPageInteractions(item, highlightsData, book) {
+        const video = item.querySelector('.scene-video');
+        const danmakuLayer = item.querySelector('.danmaku-layer');
+        const infoTabs = item.querySelector('.info-tabs');
+
+        let danmakuStarted = false;
+        const danmakus = ['太爽了', '高能预警', '这段反转了', '角色好帅', '配音绝了'];
+
+        if (video) {
+            video.addEventListener('timeupdate', () => {
+                if (!danmakuStarted && video.currentTime >= 3) {
+                    danmakuStarted = true;
+                    spawnDanmaku(danmakuLayer, danmakus);
+                }
+            });
+        }
+
+        const highlightsContainer = item.querySelector('.highlights-cards');
+        const setActiveHighlight = (index) => {
+            // 按钮视觉状态
+            item.querySelectorAll('.highlight-play').forEach(b => b.classList.remove('playing'));
+            const btn = item.querySelector(`.highlight-play[data-index='${index}']`);
+            if (btn) btn.classList.add('playing');
+            // 时间轴节点视觉状态
+            item.querySelectorAll('.timeline-node').forEach(n => n.classList.remove('active'));
+            const node = item.querySelector(`.timeline-node[data-index='${index}']`);
+            if (node) node.classList.add('active');
+            // 横滑卡片自动滚动到对应卡片
+            const card = item.querySelector(`.highlight-card[data-index='${index}']`);
+            if (highlightsContainer && card) {
+                highlightsContainer.scrollTo({ left: card.offsetLeft - 16, behavior: 'smooth' });
+            }
+        };
+
+        // 高光卡片播放
+        item.querySelectorAll('.highlight-play').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const idx = Number(e.currentTarget.dataset.index);
+                const h = highlightsData[idx];
+                if (video && typeof h.time === 'number') {
+                    video.currentTime = h.time;
+                    video.play().catch(()=>{});
+                }
+                setActiveHighlight(idx);
+            });
+        });
+
+        // 时间轴节点跳转
+        item.querySelectorAll('.timeline-node').forEach(node => {
+            node.addEventListener('click', (e) => {
+                const idx = Number(e.currentTarget.dataset.index);
+                const h = highlightsData[idx];
+                if (video && typeof h.time === 'number') {
+                    video.currentTime = h.time;
+                    video.play().catch(()=>{});
+                }
+                setActiveHighlight(idx);
+            });
+        });
+
+        // 信息区 tab 切换
+        item.querySelectorAll('.info-tab-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const tab = e.currentTarget.dataset.tab;
+                item.querySelectorAll('.info-tab-btn').forEach(b => b.classList.remove('active'));
+                e.currentTarget.classList.add('active');
+                showInfoModal(tab, book);
+            });
+        });
+
+        // 初始态：选中第一个高光
+        setActiveHighlight(0);
+    }
+
+    function showInfoModal(tab, book) {
+        const modal = document.getElementById('info-modal');
+        const titleEl = document.getElementById('gallery-title');
+        const track = document.getElementById('gallery-track');
+        if (!modal || !track) return;
+
+        const titleMap = { synopsis: '剧情梗概', world: '世界观', roles: '主要人物' };
+        titleEl.innerText = titleMap[tab] || '本书看点';
+
+        const baseImg = basePath + (book.cover || '');
+        const items = [
+            { key: 'synopsis', title: '剧情梗概', desc: book.synopsis || '暂无梗概', cover: baseImg },
+            { key: 'world', title: '世界观', desc: '蒸汽与机械并存，旧日神秘潜伏迷雾；理性与超凡交缠。', cover: baseImg },
+            { key: 'roles', title: '主要人物', desc: '主角、伙伴与对手的矛盾与牵引，共同推进关键节点。', cover: baseImg }
+        ];
+
+        track.innerHTML = items.map(it => `
+            <div class="gallery-card" data-key="${it.key}" style="background-image:url('${it.cover}')">
+                <div class="gallery-card-footer">
+                    <div class="gallery-card-title">${it.title}</div>
+                    <div class="gallery-card-desc">${it.desc}</div>
+                </div>
+            </div>
+        `).join('');
+
+        modal.classList.add('show');
+
+        // 锚定到对应卡片
+        setTimeout(() => {
+            const target = track.querySelector(`[data-key='${tab}']`);
+            if (target) {
+                track.scrollTo({ left: target.offsetLeft - 12, behavior: 'smooth' });
+            }
+        }, 0);
+    }
+
+    function hideInfoModal() {
+        const modal = document.getElementById('info-modal');
+        if (modal) modal.classList.remove('show');
+    }
+
+    function spawnDanmaku(layer, texts) {
+        if (!layer) return;
+        const height = layer.clientHeight || 100;
+        for (let i = 0; i < texts.length; i++) {
+            const div = document.createElement('div');
+            div.className = 'danmaku-item';
+            div.style.top = `${Math.random() * (height - 30)}px`;
+            div.style.animationDelay = `${i * 0.6}s`;
+            div.innerText = texts[i];
+            layer.appendChild(div);
+        }
+    }
+
+    // 激活当前页面视频并暂停其它
+    function activatePageVideo(index) {
+        const landingPageContent = document.getElementById('landing-page-content');
+        if (!landingPageContent) return;
+        Array.from(landingPageContent.children).forEach((it, i) => {
+            const v = it.querySelector('.scene-video');
+            if (!v) return;
+            if (i === index) { v.play().catch(()=>{}); } else { v.pause(); }
+        });
+    }
+
+    // 底部专辑信息条操作
+    function playFirstEpisode() {
+        if (!currentBook) return;
+        playEpisode(1);
+        const audio = document.getElementById('immersive-audio');
+        audio.play().catch(()=>{});
+    }
+
+    function continueFromCurrent() {
+        const audio = document.getElementById('immersive-audio');
+        const landingPageContent = document.getElementById('landing-page-content');
+        if (!landingPageContent || !audio) { return; }
+        const currentItem = landingPageContent.children[currentCardIndex];
+        const video = currentItem ? currentItem.querySelector('.scene-video') : null;
+        if (audio && video && audio.duration && video.duration) {
+            const percent = video.currentTime / video.duration;
+            audio.currentTime = Math.max(0, Math.min(audio.duration - 1, audio.duration * percent));
+            video.pause();
+            audio.play().catch(()=>{});
+        } else {
+            audio.play().catch(()=>{});
+        }
+    }
      
      // 订阅专辑
      function subscribeAlbum(event) {
