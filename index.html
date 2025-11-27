@@ -1288,8 +1288,7 @@
 
 <script>
     // --- 动态路径解决方案 ---
-    const isGithubPages = window.location.hostname.includes('github.io');
-    const basePath = isGithubPages ? '/wangwen2/' : '';
+    const basePath = '';
 
     // 书籍数据，从CSV汇总物料中提取的13个卡片
     const books = [
@@ -1700,7 +1699,7 @@
             // 最后三张卡片：标签和标题在一行
             card.innerHTML = `
                 <div class="grid-card-cover loading">
-                   <img loading="${loadingAttr}" src="${basePath + book.cover}" alt="${book.albumTitle}" onload="this.parentElement.classList.remove('loading')" onerror="this.parentElement.style.background='#f0f0f0'">
+                   <img loading="${loadingAttr}" src="${encodeURI(book.cover)}" alt="${book.albumTitle}" onload="this.parentElement.classList.remove('loading')" onerror="this.parentElement.style.background='#f0f0f0'">
                 </div>
                 <div class="grid-card-info">
                     <div class="grid-card-title">${book.albumTitle}</div>
@@ -1714,7 +1713,7 @@
             // 前10张卡片：原有布局
             card.innerHTML = `
                 <div class="grid-card-cover loading">
-                   <img loading="${loadingAttr}" src="${basePath + book.cover}" alt="${book.albumTitle}" onload="this.parentElement.classList.remove('loading')" onerror="this.parentElement.style.background='#f0f0f0'">
+                   <img loading="${loadingAttr}" src="${encodeURI(book.cover)}" alt="${book.albumTitle}" onload="this.parentElement.classList.remove('loading')" onerror="this.parentElement.style.background='#f0f0f0'">
                 </div>
                 <div class="grid-card-info">
                     <div>
@@ -1975,7 +1974,7 @@
          
          // 根据ID判断是否使用沉浸式布局
          // id=2、3、5、8、9、12、13 使用沉浸式大图模式
-         const immersiveIds = [2, 3, 5, 8, 9, 12, 13];
+        const immersiveIds = [1, 2, 3, 5, 8, 9, 12, 13];
          const isImmersive = immersiveIds.includes(book.id);
          
          // 获取对应的封面图（用于沉浸式背景）
@@ -2032,7 +2031,7 @@
             const highlightsData = Array.isArray(book.highlights) && book.highlights.length > 0 ? book.highlights : defaultHighlights;
 
             const highlightsCardsHtml = highlightsData.map((h, idx) => `
-                <div class="highlight-card" data-index="${idx}" style="background-image:url('${basePath + h.cover}')">
+                <div class="highlight-card" data-index="${idx}" style="background-image:url('${encodeURI(h.cover)}')">
                   <div class="highlight-overlay">
                     <div class="highlight-title">${h.title}</div>
                     <button class="highlight-play" data-index="${idx}"><span class="play-icon"></span><span class="play-text">播放</span><span class="eq"><i></i><i></i><i></i></span></button>
@@ -2050,11 +2049,11 @@
             `;
 
             const tagline = (book.title || contentText).slice(0, 36);
-            const videoSrc = book.videoFile ? (basePath + book.videoFile) : (basePath + (book.persona && book.persona.includes('female') ? 'video-female-youth.mp4' : 'video-male-youth.mp4'));
+            const videoSrc = book.videoFile ? book.videoFile : ((book.persona && book.persona.includes('female')) ? 'video-female-youth.mp4' : 'video-male-youth.mp4');
 
             item.innerHTML = `
                 <div class="top-scene">
-                   <video class="scene-video" playsinline muted preload="metadata" src="${videoSrc}"></video>
+                   <video class="scene-video" playsinline muted preload="metadata" src="${encodeURI(videoSrc)}"></video>
                    <div class="immersive-gradient-mask" style="background:${gradientMask}"></div>
                    <div class="danmaku-layer"></div>
                    <div class="title-overlay">${book.albumTitle}</div>
@@ -2095,7 +2094,7 @@
                  <!-- 多模态卡片区域 - 剧情梗概卡片 -->
                  <div class="multimedia-cards">
                      <div class="synopsis-card" style="background: ${themeColor}">
-                         <div class="synopsis-card-bg" style="background-image: url('${basePath}${book.cover}')"></div>
+                        <div class="synopsis-card-bg" style="background-image: url('${encodeURI(book.cover)}')"></div>
                          <div class="synopsis-card-title">简介</div>
                          <div class="synopsis-card-content">${book.synopsis || '暂无剧情梗概...'}</div>
                      </div>
@@ -2118,11 +2117,11 @@
         const audio = document.getElementById('immersive-audio');
         // 特殊处理：不同书籍播放指定的音频文件
         if (book.albumTitle === "诡秘之主") {
-            audio.src = basePath + "诡秘之主+008+愚者【伦纳德：李嘉祥，代表作《月上重火》白木林《美人为馅》刘放，《赘婿》参与配音等】.m4a";
+            audio.src = encodeURI("诡秘之主+008+愚者【伦纳德：李嘉祥，代表作《月上重火》白木林《美人为馅》刘放，《赘婿》参与配音等】.m4a");
         } else if (book.albumTitle === "上门龙婿") {
-            audio.src = basePath + "2025_11_26_重生八零：媳妇有点辣 0043 拓展了新生意/上门龙婿002 现金一百亿.mp3";
+            audio.src = encodeURI("2025_11_26_重生八零：媳妇有点辣 0043 拓展了新生意/上门龙婿002 现金一百亿.mp3");
         } else if (book.albumTitle === "重生八零媳妇有点辣") {
-            audio.src = basePath + "2025_11_26_重生八零：媳妇有点辣 0043 拓展了新生意/重生八零：媳妇有点辣 0043 拓展了新生意.mp3";
+            audio.src = encodeURI("2025_11_26_重生八零：媳妇有点辣 0043 拓展了新生意/重生八零：媳妇有点辣 0043 拓展了新生意.mp3");
         } else {
             audio.src = ''; // 清除旧的音频
         }
@@ -2154,7 +2153,7 @@
         // 显示声音名（episodeTitle）而不是专辑名
         const episodeTitle = book.episodeTitle || book.albumTitle;
         document.getElementById('player-dock-title').innerText = episodeTitle;
-        document.getElementById('player-dock-cover').src = basePath + book.cover;
+        document.getElementById('player-dock-cover').src = book.cover;
          
          const statusText = book.isCompleted ? '已完结' : '连载中';
          const currentEp = book.currentEpisode || 1;
@@ -2172,7 +2171,7 @@
         const bar = document.getElementById('album-info-bar');
         const coverEl = document.getElementById('album-info-cover');
         const titleEl = document.getElementById('album-info-title');
-        if (coverEl) coverEl.src = basePath + book.cover;
+        if (coverEl) coverEl.src = book.cover;
         if (titleEl) titleEl.innerText = episodeTitle; // 使用声音标题
         if (bar) bar.style.display = 'block';
 
@@ -2504,7 +2503,7 @@
         const titleMap = { synopsis: '剧情梗概', world: '世界观', roles: '主要人物' };
         titleEl.innerText = titleMap[tab] || '本书看点';
 
-        const baseImg = basePath + (book.cover || '');
+        const baseImg = (book.cover || '');
         const items = [
             { key: 'synopsis', title: '剧情梗概', desc: book.synopsis || '暂无梗概', cover: baseImg },
             { key: 'world', title: '世界观', desc: '蒸汽与机械并存，旧日神秘潜伏迷雾；理性与超凡交缠。', cover: baseImg },
