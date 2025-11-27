@@ -1165,7 +1165,7 @@
 <script>
     // --- 动态路径解决方案 ---
     const isGithubPages = window.location.hostname.includes('github.io');
-    const basePath = isGithubPages ? '/wangwen/' : '';
+    const basePath = isGithubPages ? '/wangwen2/' : '';
 
     // 书籍数据，从CSV汇总物料中提取的13个卡片
     const books = [
@@ -1899,18 +1899,34 @@
                     rgba(${r}, ${g}, ${b}, 1) 100%)`;
             }
             
+            const highlightsData = Array.isArray(book.highlights) && book.highlights.length > 0
+                ? book.highlights
+                : [
+                    { title: '精彩片段 · 高潮一幕', subtitle: '点击播放', cover: coverImage },
+                    { title: '名场面 · 角色高能', subtitle: '点击播放', cover: coverImage },
+                    { title: '剧情反转 · 看点', subtitle: '点击播放', cover: coverImage }
+                  ];
+
+            const highlightCards = highlightsData.map(h => `
+                <div class="h-card" style="background-image: url('${basePath + h.cover}');">
+                    <div class="h-card-overlay">
+                        <div class="h-card-title">${h.title}</div>
+                        <div class="h-card-subtitle">${h.subtitle}</div>
+                        <button class="h-card-btn">播放</button>
+                    </div>
+                </div>
+            `).join('');
+
             item.innerHTML = `
-                <!-- 沉浸式大图背景 -->
                 <div class="landing-header-image" style="background-image: url('${basePath + coverImage}')"></div>
-                
-                <!-- 主题色渐变遮罩 -->
                 <div class="immersive-gradient-mask" style="background: ${gradientMask}"></div>
-                
-                <!-- 沉浸式内容 -->
                 <div class="immersive-content">
                     <div class="immersive-text-container">
                         <div class="immersive-title">${book.albumTitle}</div>
                         <div class="immersive-text">${contentText}</div>
+                    </div>
+                    <div class="banner-section">
+                        <div class="horizontal-cards">${highlightCards}</div>
                     </div>
                 </div>
             `;
